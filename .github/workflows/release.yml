@@ -1,0 +1,43 @@
+name: Release
+
+# Para publicar uma versão:  git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile --os="*" --cpu="*"
+      - run: bun test
+
+      - name: Usa a versão da tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' package.json > package.tmp && mv package.tmp package.json
+
+      - name: Compila os binários
+        run: bun run build
+
+      - name: Testa o instalador com os arquivos gerados
+        run: |
+          ZELADOR_DOWNLOAD_BASE="file://$PWD/dist" ZELADOR_INSTALL_DIR="$RUNNER_TEMP/bin" \
+          ZELADOR_CONFIG_DIR="$RUNNER_TEMP/etc" bash install.sh --no-motd
+          "$RUNNER_TEMP/bin/zela" --version
+          "$RUNNER_TEMP/bin/zela" status
+
+      - name: Publica a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "zelador $GITHUB_REF_NAME" \
+            --generate-notes
