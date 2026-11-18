@@ -52,3 +52,10 @@ jobs:
               --title "zelador $GITHUB_REF_NAME" \
               --generate-notes
           fi
+
+      - name: Testa a instalação real (baixando do GitHub, como o usuário faz)
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/install.sh" | \
+            ZELADOR_INSTALL_DIR="$RUNNER_TEMP/real" ZELADOR_CONFIG_DIR="$RUNNER_TEMP/real-etc" \
+            bash -s -- --no-motd --version "${GITHUB_REF_NAME#v}"
+          test "$("$RUNNER_TEMP/real/zela" --version)" = "${GITHUB_REF_NAME#v}"

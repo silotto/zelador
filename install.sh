@@ -54,10 +54,10 @@ fi
 
 OS_NAME="Linux"
 if [ -r /etc/os-release ]; then
-  # shellcheck disable=SC1091
-  . /etc/os-release
-  OS_NAME="${PRETTY_NAME:-Linux}"
-  case "${ID:-}${ID_LIKE:-}" in
+  # lê em subshell: o os-release define VERSION, ID etc. e não pode sobrescrever as nossas variáveis
+  OS_NAME="$(. /etc/os-release && echo "${PRETTY_NAME:-Linux}")"
+  OS_FAMILY="$(. /etc/os-release && echo "${ID:-} ${ID_LIKE:-}")"
+  case "$OS_FAMILY" in
     *debian* | *ubuntu*) ;;
     *) warn "$OS_NAME ainda não é testado oficialmente (foco: Ubuntu e Debian). Seguindo mesmo assim." ;;
   esac

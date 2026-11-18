@@ -19,3 +19,7 @@ jobs:
       - run: bash -n install.sh
       - name: Build (smoke)
         run: bun run build x64 && ./dist/zela-linux-x64 --version
+      - name: Instalador com a última release publicada
+        run: |
+          ZELADOR_INSTALL_DIR="$RUNNER_TEMP/bin" ZELADOR_CONFIG_DIR="$RUNNER_TEMP/etc" bash install.sh --no-motd
+          "$RUNNER_TEMP/bin/zela" --version
