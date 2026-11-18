@@ -1,9 +1,16 @@
 name: Release
 
-# Para publicar uma versão:  git tag v0.1.0 && git push origin v0.1.0
+# Para publicar uma versão, escolha um dos caminhos:
+#   - git tag v0.1.0 && git push origin v0.1.0
+#   - no GitHub: Releases → Draft a new release → tag v0.1.0 → Publish release
 on:
   push:
     tags: ["v*"]
+  release:
+    types: [published]
+
+concurrency:
+  group: release-${{ github.ref_name }}
 
 permissions:
   contents: write
@@ -38,6 +45,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "zelador $GITHUB_REF_NAME" \
-            --generate-notes
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --title "zelador $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
